@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
+<title>Habit Tracker</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        min-height: 100%;
+    }
+
+    /* Notion Dark Mode Background */
+    body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Instrument Serif", Georgia, serif;
+        background-color: #191919;
+        padding: 20px;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    /* Compact Sparkles Container Around Card */
+    .sparkles-container {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        max-width: 420px;
+    }
+
+    .sparkles-bg {
+        position: absolute;
+        top: -30px;
+        left: -30px;
+        right: -30px;
+        bottom: -30px;
+        pointer-events: none;
+        z-index: 0;
+        color: #e8a5ac;
+        user-select: none;
+    }
+
+    .sparkle {
+        position: absolute;
+        opacity: 0.35;
+        text-shadow: 0 0 8px rgba(232, 165, 172, 0.4);
+    }
+
+    /* Sparkle Positions */
+    .sp-1  { top: 5%;   left: 2%;   font-size: 18px; opacity: 0.4; }
+    .sp-2  { top: 10%;  right: 4%;  font-size: 14px; opacity: 0.3; }
+    .sp-3  { top: 28%;  left: -2%; font-size: 12px; opacity: 0.25; }
+    .sp-4  { top: 35%;  right: -5%; font-size: 20px; opacity: 0.45; }
+    .sp-5  { top: 58%;  left: -4%; font-size: 16px; opacity: 0.3; }
+    .sp-6  { top: 62%;  right: -2%; font-size: 12px; opacity: 0.25; }
+    .sp-7  { top: 82%;  left: 3%;   font-size: 22px; opacity: 0.4; }
+    .sp-8  { top: 88%;  right: 5%;  font-size: 16px; opacity: 0.35; }
+    .sp-9  { bottom: 25px; left: 30%; font-size: 12px; opacity: 0.25; }
+    .sp-10 { bottom: 22px; right: 30%; font-size: 18px; opacity: 0.4; }
+
+    /* Main Habit Card Container */
+    .habit-card {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 420px;
+        min-height: 520px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+
+        text-align: center;
+
+        padding: 30px 22px;
+
+        /* Image Mask & Rounded Corners */
+        border-radius: 20px;
+        background-image: url("https://i.pinimg.com/736x/03/5d/89/035d89c54e011c08a47b62ae9b90aa96.jpg");
+        background-size: cover;
+        background-position: center 100%;
+        background-repeat: no-repeat;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+
+        overflow: hidden;
+    }
+
+    .header-section {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+
+    .mode {
+        font-size: clamp(20px, 4.5vw, 26px);
+        margin-bottom: 8px;
+        color: #b54556;
+    }
+
+    /* Streak Header Box - Lighter Pink Styling */
+    .streak-banner {
+        display: inline-block;
+        margin: 4px 0 6px;
+        padding: 6px 16px;
+        background: rgba(255, 235, 238, 0.9);
+        border: 1.5px solid rgba(224, 110, 127, 0.75);
+        border-radius: 16px;
+        font-size: 18px;
+        color: #b54556;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        transition: transform 0.2s ease;
+        box-shadow: 0 2px 8px rgba(224, 110, 127, 0.12);
+    }
+
+    /* Bounce animation when streak updates */
+    .streak-banner.bounce {
+        animation: streakPop 0.5s ease-in-out;
+    }
+
+    @keyframes streakPop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.15); color: #e06e7f; }
+        100% { transform: scale(1); color: #b54556; }
+    }
+
+    /* Habit List */
+    .habit-list {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin: 10px 0;
+    }
+
+    /* Checklist Items - Lighter Soft Pink Background */
+    .habit-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: rgba(255, 235, 238, 0.85);
+        border: 1.5px solid rgba(224, 110, 127, 0.75);
+        border-radius: 16px;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        cursor: pointer;
+        transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+        box-shadow: 0 2px 8px rgba(224, 110, 127, 0.1);
+    }
+
+    .habit-item:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 240, 243, 0.95);
+        border-color: rgba(224, 110, 127, 0.95);
+    }
+
+    .habit-item.done {
+        background: rgba(224, 110, 127, 0.35);
+        border-color: rgba(181, 69, 86, 0.85);
+    }
+
+    .habit-item.done .habit-name {
+        text-decoration: line-through;
+        opacity: 0.65;
+    }
+
+    .habit-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .checkbox {
+        width: 22px;
+        height: 22px;
+        border: 1.5px solid rgba(224, 110, 127, 0.85);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.8);
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .habit-item.done .checkbox {
+        background: #e06e7f;
+        border-color: #e06e7f;
+    }
+
+    .checkbox::after {
+        content: "✦";
+        font-size: 12px;
+        color: white;
+        display: none;
+    }
+
+    .habit-item.done .checkbox::after {
+        display: block;
+    }
+
+    .habit-name {
+        font-size: 20px;
+        color: #b54556;
+    }
+
+    .habit-tag {
+        font-size: 15px;
+        color: #b54556;
+    }
+
+    /* Progress Bar Track - Lighter Pink Base */
+    .progress-container {
+        width: 100%;
+        height: 14px;
+        background: rgba(255, 235, 238, 0.8);
+        border: 1.5px solid rgba(224, 110, 127, 0.75);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 12px 0 6px;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Progress Bar Fill */
+    .progress-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #e06e7f 0%, #e8a5ac 100%);
+        border-radius: 8px;
+        transition: width 0.4s ease-in-out;
+    }
+
+    /* All Done Celebration Banner */
+    .done-message {
+        font-size: 18px;
+        color: #b54556;
+        margin-top: 6px;
+        min-height: 26px;
+        opacity: 0;
+        transform: translateY(6px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .done-message.show {
+        opacity: 1;
+        transform: translateY(0);
+        animation: celebrateGlow 1.2s ease-in-out infinite alternate;
+    }
+
+    @keyframes celebrateGlow {
+        from {
+            text-shadow: 0 0 2px rgba(224, 110, 127, 0.3);
+            transform: scale(1);
+        }
+        to {
+            text-shadow: 0 0 10px rgba(224, 110, 127, 0.8);
+            transform: scale(1.04);
+        }
+    }
+
+    /* Custom Gradient Buttons */
+    .buttons {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+        max-width: 100%;
+    }
+
+    button {
+        font-family: "Instrument Serif", Georgia, serif;
+        font-size: 15px;
+
+        /* Pink Gradient Text */
+        color: transparent;
+        background-image: linear-gradient(180deg, #e06e7f 0%, #e8a5ac 100%), linear-gradient(180deg, rgba(255, 235, 238, 0.9), rgba(255, 235, 238, 0.9)), linear-gradient(180deg, #e06e7f, #e8a5ac);
+        background-clip: text, padding-box, border-box;
+        -webkit-background-clip: text, padding-box, border-box;
+        -webkit-text-fill-color: transparent;
+
+        /* Gradient Border Frame */
+        border: 2px solid transparent;
+        border-radius: 18px;
+
+        padding: 6px 14px;
+
+        cursor: pointer;
+
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+
+        transition:
+            transform 0.15s ease,
+            background-color 0.15s ease;
+    }
+
+    button:hover {
+        transform: translateY(-2px);
+        background-image: linear-gradient(180deg, #e06e7f 0%, #e8a5ac 100%), linear-gradient(180deg, rgba(255, 245, 247, 0.95), rgba(255, 245, 247, 0.95)), linear-gradient(180deg, #e06e7f, #e8a5ac);
+    }
+
+    button:active {
+        transform: translateY(0);
+    }
+
+    /* Modal Overlay & Card for Reset Confirmation */
+    .modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(25, 25, 25, 0.45);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 10;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+    }
+
+    .modal-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .modal-card {
+        background: rgba(255, 235, 238, 0.95);
+        border: 1.5px solid rgba(224, 110, 127, 0.85);
+        border-radius: 18px;
+        padding: 22px 18px;
+        width: 85%;
+        max-width: 310px;
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        transform: scale(0.9);
+        transition: transform 0.25s ease;
+    }
+
+    .modal-overlay.active .modal-card {
+        transform: scale(1);
+    }
+
+    .modal-title {
+        font-size: 20px;
+        color: #b54556;
+        margin-bottom: 6px;
+    }
+
+    .modal-subtitle {
+        font-size: 16px;
+        color: #b54556;
+        opacity: 0.85;
+        margin-bottom: 16px;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    @media (max-width: 500px) {
+        .habit-card {
+            padding: 24px 12px;
+            min-height: auto;
+            max-width: 340px;
+        }
+
+        .habit-name {
+            font-size: 18px;
+        }
+
+        .buttons {
+            gap: 6px;
+        }
+
+        button {
+            font-size: 13px;
+            padding: 6px 12px;
+            border-radius: 14px;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="sparkles-container">
+    <div class="sparkles-bg">
+        <span class="sparkle sp-1">✦</span>
+        <span class="sparkle sp-2">*</span>
+        <span class="sparkle sp-3">.</span>
+        <span class="sparkle sp-4">✦</span>
+        <span class="sparkle sp-5">˚</span>
+        <span class="sparkle sp-6">.</span>
+        <span class="sparkle sp-7">✦</span>
+        <span class="sparkle sp-8">*</span>
+        <span class="sparkle sp-9">˚</span>
+        <span class="sparkle sp-10">✦</span>
+    </div>
+
+    <div class="habit-card">
+
+        <div class="header-section">
+            <div class="mode">
+                ♩  ִ daily habits ⊹ ִ (ˆᗜˆ)
+            </div>
+            
+            <div class="streak-banner" id="streakDisplay">
+                0 day streak
+            </div>
+        </div>
+
+        <!-- Habit List -->
+        <div class="habit-list">
+            <div class="habit-item" onclick="toggleHabit(this)">
+                <div class="habit-left">
+                    <div class="checkbox"></div>
+                    <span class="habit-name">study</span>
+                </div>
+                <span class="habit-tag">♩ ִ</span>
+            </div>
+
+            <div class="habit-item" onclick="toggleHabit(this)">
+                <div class="habit-left">
+                    <div class="checkbox"></div>
+                    <span class="habit-name">complete tasks on time</span>
+                </div>
+                <span class="habit-tag">⊹ ִ</span>
+            </div>
+
+            <div class="habit-item" onclick="toggleHabit(this)">
+                <div class="habit-left">
+                    <div class="checkbox"></div>
+                    <span class="habit-name">check aralinks</span>
+                </div>
+                <span class="habit-tag">♡ ִ</span>
+            </div>
+
+            <div class="habit-item" onclick="toggleHabit(this)">
+                <div class="habit-left">
+                    <div class="checkbox"></div>
+                    <span class="habit-name">read scholastic</span>
+                </div>
+                <span class="habit-tag">✦ ִ</span>
+            </div>
+        </div>
+
+        <!-- Progress Bar Track -->
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <!-- Animated "All Done" Message -->
+        <div class="done-message" id="doneMessage">
+            all done for today! (˃͈ ˂͈) ♡
+        </div>
+
+        <div class="buttons">
+            <button onclick="resetToday()">
+                ↻ reset today
+            </button>
+            <button onclick="promptClearStreak()">
+                ⚙ reset streak
+            </button>
+        </div>
+
+        <!-- Confirmation Modal -->
+        <div class="modal-overlay" id="confirmModal">
+            <div class="modal-card">
+                <div class="modal-title">reset your streak? ִ ✦</div>
+                <div class="modal-subtitle">this will reset your streak counter to 0!</div>
+                <div class="modal-actions">
+                    <button onclick="cancelClearStreak()">cancel</button>
+                    <button onclick="confirmClearStreak()">yes, reset</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+const sparkleSoundUrl = "https://cdn.discordapp.com/attachments/1227779114824368170/1543647392719446127/sparkle.mp3?ex=6a95a12a&is=6a944faa&hm=f79bd86b16801acfca746032316ce18f2af720cf182ced0fc8b25f02e430baaa&";
+
+const sparkleAudio = new Audio(sparkleSoundUrl);
+sparkleAudio.preload = "auto";
+
+let streak = 0;
+
+function playSparkle() {
+    try {
+        sparkleAudio.currentTime = 0;
+        sparkleAudio.play().catch(e => console.log("Audio blocked:", e));
+    } catch(e) {
+        console.log("Audio error:", e);
+    }
+}
+
+function toggleHabit(element) {
+    element.classList.toggle("done");
+    playSparkle();
+    updateStatus();
+}
+
+function triggerStreakAnimation() {
+    const streakDisplay = document.getElementById("streakDisplay");
+    streakDisplay.classList.remove("bounce");
+    void streakDisplay.offsetWidth;
+    streakDisplay.classList.add("bounce");
+}
+
+function updateStatus() {
+    const total = document.querySelectorAll('.habit-item').length;
+    const completed = document.querySelectorAll('.habit-item.done').length;
+    
+    const progressBar = document.getElementById("progressBar");
+    const doneMessage = document.getElementById("doneMessage");
+    const streakDisplay = document.getElementById("streakDisplay");
+
+    const percentage = (completed / total) * 100;
+    progressBar.style.width = percentage + "%";
+
+    if (completed === total) {
+        doneMessage.classList.add("show");
+        if (!doneMessage.dataset.completedToday) {
+            streak++;
+            doneMessage.dataset.completedToday = "true";
+            triggerStreakAnimation();
+        }
+    } else {
+        doneMessage.classList.remove("show");
+        if (doneMessage.dataset.completedToday) {
+            streak = Math.max(0, streak - 1);
+            delete doneMessage.dataset.completedToday;
+            triggerStreakAnimation();
+        }
+    }
+
+    streakDisplay.textContent = `${streak} day streak`;
+}
+
+function resetToday() {
+    const habits = document.querySelectorAll('.habit-item');
+    habits.forEach(h => h.classList.remove('done'));
+    const doneMessage = document.getElementById("doneMessage");
+    if (doneMessage.dataset.completedToday) {
+        streak = Math.max(0, streak - 1);
+        delete doneMessage.dataset.completedToday;
+        triggerStreakAnimation();
+    }
+    updateStatus();
+}
+
+/* Confirmation Modal Functions */
+function promptClearStreak() {
+    document.getElementById("confirmModal").classList.add("active");
+}
+
+function cancelClearStreak() {
+    document.getElementById("confirmModal").classList.remove("active");
+}
+
+function confirmClearStreak() {
+    streak = 0;
+    resetToday();
+    cancelClearStreak();
+}
+</script>
+
+</body>
+</html>
